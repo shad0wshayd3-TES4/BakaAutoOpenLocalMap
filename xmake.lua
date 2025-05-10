@@ -5,8 +5,8 @@ set_xmakever("2.8.2")
 includes("lib/commonlibob64")
 
 -- set project
-set_project("commonlibob64-template")
-set_version("0.0.0")
+set_project("BakaAutoOpenLocalMap")
+set_version("1.0.0")
 set_license("GPL-3.0")
 
 -- set defaults
@@ -21,15 +21,14 @@ add_rules("mode.debug", "mode.releasedbg")
 add_rules("plugin.vsxmake.autoupdate")
 
 -- targets
-target("commonlibob64-template")
+target("BakaAutoOpenLocalMap")
     -- add dependencies to target
     add_deps("commonlibob64")
 
     -- add commonlibsse plugin
     add_rules("commonlibob64.plugin", {
-        name = "commonlibob64-template",
-        author = "qudix",
-        description = "OBSE plugin template using CommonLibOB64"
+        name = "BakaAutoOpenLocalMap",
+        author = "shad0wshayd3"
     })
 
     -- add src files
