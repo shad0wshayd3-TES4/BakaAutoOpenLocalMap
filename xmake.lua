@@ -14,6 +14,7 @@ set_languages("c++23")
 set_warnings("allextra")
 
 -- set policies
+set_policy("build.optimization.lto", true)
 set_policy("package.requires_lock", true)
 
 -- add rules
@@ -36,3 +37,6 @@ target("BakaAutoOpenLocalMap")
     add_headerfiles("src/**.h")
     add_includedirs("src")
     set_pcxxheader("src/pch.h")
+
+    -- add extra files
+    add_extrafiles(".clang-format")
