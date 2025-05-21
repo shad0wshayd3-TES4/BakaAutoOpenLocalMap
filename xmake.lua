@@ -21,6 +21,9 @@ set_policy("package.requires_lock", true)
 add_rules("mode.debug", "mode.releasedbg")
 add_rules("plugin.vsxmake.autoupdate")
 
+-- set config
+set_config("rex_json", true)
+
 -- targets
 target("BakaAutoOpenLocalMap")
     -- add dependencies to target
