@@ -162,24 +162,24 @@ namespace HOOK
 
 			if (auto Player = RE::PlayerCharacter::GetSingleton())
 			{
-				if (JSON::AutoInteriors && Player->GetInterior())
+				if (Player->GetInterior())
 				{
-					SwitchTabs(a_this);
-					return;
+					if (JSON::AutoInteriors)
+					{
+						SwitchTabs(a_this);
+						return;
+					}
 				}
-
-				if (auto WorldSpace = Player->GetWorldSpace())
+				else if (auto WorldSpace = Player->GetWorldSpace())
 				{
 					auto editorID = WorldSpace->editorID.c_str();
 					if (JSON::AutoSmallWorld && WorldSpace->flags & 1)
 					{
 						if (!ListHasWorldSpace(JSON::AutoSmallWorldBlockList.GetValue(), editorID))
 						{
+							SwitchTabs(a_this);
 							return;
 						}
-
-						SwitchTabs(a_this);
-						return;
 					}
 
 					if (ListHasWorldSpace(JSON::AutoWorldSpaces.GetValue(), editorID))
