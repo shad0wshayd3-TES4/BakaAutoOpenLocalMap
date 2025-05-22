@@ -117,6 +117,11 @@ namespace HOOK
 		{
 			_DoIdle(a_this);
 
+			if (!JSON::RefocusWorldMap)
+			{
+				return;
+			}
+
 			if (auto InterfaceManager = RE::InterfaceManager::GetInstance(false, true);
 			    InterfaceManager && InterfaceManager->mapPageNumber != 2)
 			{
@@ -186,14 +191,47 @@ namespace HOOK
 			}
 		}
 
-		inline static std::int32_t iFrame{ 0 };
-
 		inline static REL::HookVFT _DoIdle{ RE::MapMenu::VTABLE[0], 0x12, DoIdle };
 		inline static REL::HookVFT _StartFadeOut{ RE::MapMenu::VTABLE[0], 0x16, StartFadeOut };
 		inline static REL::HookVFT _StartFadeIn{ RE::MapMenu::VTABLE[0], 0x18, StartFadeIn };
 
 	public:
+		inline static std::atomic<std::int32_t> iFrame{ 0 };
 		inline static REL::Relocation<bool*> FogOfWar{ REL::Offset(0x8FDCC80) };
+	};
+
+	class hkSwitchTabs :
+		public REX::Singleton<hkSwitchTabs>
+	{
+	private:
+		static void SwitchTabs(RE::MapMenu* a_this, std::int32_t a_id, RE::Tile* a_target)
+		{
+			if (a_id > 2)
+			{
+				hkMapMenu::iFrame = 0;
+			}
+			return _Hook0(a_this, a_id, a_target);
+		}
+
+		inline static REL::Hook _Hook0{ REL::Offset(0x6587B30), 0x2BC, SwitchTabs };
+		inline static REL::Hook _Hook1{ REL::Offset(0x6589190), 0xBF6, SwitchTabs };
+		inline static REL::Hook _Hook2{ REL::Offset(0x6597020), 0x055, SwitchTabs };
+	};
+
+	class hkSwitchTabsNotifyingAltar :
+		public REX::Singleton<hkSwitchTabsNotifyingAltar>
+	{
+	private:
+		static void SwitchTabsNotifyingAltar(RE::MapMenu* a_this, std::int32_t a_id, RE::Tile* a_target)
+		{
+			if (a_id > 2)
+			{
+				hkMapMenu::iFrame = 0;
+			}
+			return _SwitchTabsNotifyingAltar(a_this, a_id, a_target);
+		}
+
+		inline static REL::Hook _SwitchTabsNotifyingAltar{ REL::Offset(0x6600730), 0x2234, SwitchTabsNotifyingAltar };
 	};
 
 	static void Init()
@@ -223,6 +261,6 @@ namespace
 
 OBSE_PLUGIN_LOAD(const OBSE::LoadInterface* a_obse)
 {
-	OBSE::Init(a_obse);
+	OBSE::Init(a_obse, { .trampoline = true, .trampolineSize = 32 });
 	return true;
 }
