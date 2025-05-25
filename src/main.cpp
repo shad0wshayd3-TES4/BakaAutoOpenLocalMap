@@ -6,8 +6,8 @@ namespace REX::JSON
 	{
 		template <>
 		void SettingLoad<list_t>(
-			void* a_data,
-			path_t a_path,
+			void*   a_data,
+			path_t  a_path,
 			list_t& a_value,
 			list_t& a_valueDefault)
 		{
@@ -24,8 +24,8 @@ namespace REX::JSON
 
 		template <>
 		void SettingSave<list_t>(
-			void* a_data,
-			path_t a_path,
+			void*   a_data,
+			path_t  a_path,
 			list_t& a_value)
 		{
 			auto& json = *static_cast<nlohmann::json*>(a_data);
@@ -51,7 +51,7 @@ namespace JSON
 	static REX::JSON::Bool DisableFogOfWar{ "disableFogOfWar", false };
 
 	static REX::JSON::Bool RefocusWorldMap{ "refocusWorldMap", true };
-	static REX::JSON::I32 RefocusWorldMapDelay{ "refocusWorldMapDelay", 30 };
+	static REX::JSON::I32  RefocusWorldMapDelay{ "refocusWorldMapDelay", 30 };
 
 	static REX::JSON::StrA AutoSmallWorldBlockList{
 		"autoSmallWorldBlocklist",
@@ -61,10 +61,10 @@ namespace JSON
 	static REX::JSON::StrA AutoWorldSpaces{
 		"autoWorldSpaces",
 		{ "SETheFringe"s,
-		  "SETheFringeOrdered"s,
-		  "SENSBliss"s,
-		  "SENSCrucible"s,
-		  "SENSPalace"s }
+          "SETheFringeOrdered"s,
+          "SENSBliss"s,
+          "SENSCrucible"s,
+          "SENSPalace"s }
 	};
 
 	static void Init()
@@ -123,7 +123,7 @@ namespace HOOK
 			}
 
 			if (auto InterfaceManager = RE::InterfaceManager::GetInstance(false, true);
-			    InterfaceManager && InterfaceManager->mapPageNumber != 2)
+				InterfaceManager && InterfaceManager->mapPageNumber != 2)
 			{
 				return;
 			}
@@ -155,7 +155,7 @@ namespace HOOK
 			_StartFadeIn(a_this);
 
 			if (auto InterfaceManager = RE::InterfaceManager::GetInstance(false, true);
-			    InterfaceManager && InterfaceManager->mapPageNumber != 2)
+				InterfaceManager && InterfaceManager->mapPageNumber != 2)
 			{
 				return;
 			}
@@ -262,5 +262,6 @@ namespace
 OBSE_PLUGIN_LOAD(const OBSE::LoadInterface* a_obse)
 {
 	OBSE::Init(a_obse, { .trampoline = true, .trampolineSize = 32 });
+	OBSE::GetMessagingInterface()->RegisterListener(MessageHandler);
 	return true;
 }
