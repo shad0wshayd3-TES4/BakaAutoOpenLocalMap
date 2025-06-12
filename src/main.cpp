@@ -85,18 +85,18 @@ namespace HOOK
 		static void SendHandler(UE::IPairingGate* a_this, UE::VPairingEntry* a_pairingEntry, std::uint64_t a_frameNumber, const char* a_handlerName, handler_t* a_handler, bool a_arg)
 		{
 			using func_t = decltype(&hkMapMenu::SendHandler);
-			static REL::Relocation<func_t> func{ REL::Offset(0x47A8920) };
+			static REL::Relocation<func_t> func{ REL::ID(305551) };
 			return func(a_this, a_pairingEntry, a_frameNumber, a_handlerName, a_handler, a_arg);
 		}
 
 		static void HandleGetCanFastTravelFromWorldSpace(UE::VPairingEntry* a_pairingEntry, bool a_arg)
 		{
 			using func_t = decltype(&hkMapMenu::HandleGetCanFastTravelFromWorldSpace);
-			static REL::Relocation<func_t> func{ REL::Offset(0x47338A0) };
+			static REL::Relocation<func_t> func{ REL::ID(304001) };
 			return func(a_pairingEntry, a_arg);
 		}
 
-		inline static REL::Relocation<std::uint32_t*> Main_iFrameCounter{ REL::Offset(0x8F9F538) };
+		inline static REL::Relocation<std::uint32_t*> Main_iFrameCounter{ REL::ID(1462496) };
 
 	private:
 		static bool ListHasWorldSpace(const std::vector<std::string>& a_list, const std::string a_name)
@@ -172,10 +172,10 @@ namespace HOOK
 			}
 		}
 
-		inline static REL::Hook _Hook{ REL::Offset(0x656B240), 0x46, GetCanFastTravelFromWorldSpace };
+		inline static REL::Hook _Hook{ REL::ID(404587), 0x46, GetCanFastTravelFromWorldSpace };
 
 	public:
-		inline static REL::Relocation<bool*> FogOfWar{ REL::Offset(0x8F9F2C0) };
+		inline static REL::Relocation<bool*> FogOfWar{ REL::ID(1462449) };
 	};
 
 	static void Init()
@@ -205,7 +205,7 @@ namespace
 
 OBSE_PLUGIN_LOAD(const OBSE::LoadInterface* a_obse)
 {
-	OBSE::Init(a_obse, { .trampoline = true, .trampolineSize = 32 });
+	OBSE::Init(a_obse, { .trampoline = true });
 	OBSE::GetMessagingInterface()->RegisterListener(MessageHandler);
 	return true;
 }
