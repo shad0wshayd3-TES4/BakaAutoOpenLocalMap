@@ -50,9 +50,6 @@ namespace JSON
 	static REX::JSON::Bool AutoSmallWorld{ "autoSmallWorld", true };
 	static REX::JSON::Bool DisableFogOfWar{ "disableFogOfWar", false };
 
-	static REX::JSON::Bool RefocusWorldMap{ "refocusWorldMap", true };
-	static REX::JSON::I32  RefocusWorldMapDelay{ "refocusWorldMapDelay", 30 };
-
 	static REX::JSON::StrA AutoSmallWorldBlockList{
 		"autoSmallWorldBlocklist",
 		{}
@@ -83,6 +80,25 @@ namespace HOOK
 		public REX::Singleton<hkMapMenu>
 	{
 	private:
+		using handler_t = void(UE::VPairingEntry*, bool);
+
+		static void SendHandler(UE::IPairingGate* a_this, UE::VPairingEntry* a_pairingEntry, std::uint64_t a_frameNumber, const char* a_handlerName, handler_t* a_handler, bool a_arg)
+		{
+			using func_t = decltype(&hkMapMenu::SendHandler);
+			static REL::Relocation<func_t> func{ REL::Offset(0x47A8920) };
+			return func(a_this, a_pairingEntry, a_frameNumber, a_handlerName, a_handler, a_arg);
+		}
+
+		static void HandleGetCanFastTravelFromWorldSpace(UE::VPairingEntry* a_pairingEntry, bool a_arg)
+		{
+			using func_t = decltype(&hkMapMenu::HandleGetCanFastTravelFromWorldSpace);
+			static REL::Relocation<func_t> func{ REL::Offset(0x47338A0) };
+			return func(a_pairingEntry, a_arg);
+		}
+
+		inline static REL::Relocation<std::uint32_t*> Main_iFrameCounter{ REL::Offset(0x8F9F538) };
+
+	private:
 		static bool ListHasWorldSpace(const std::vector<std::string>& a_list, const std::string a_name)
 		{
 			const auto it = std::find_if(
@@ -107,131 +123,59 @@ namespace HOOK
 			return (it != a_list.end());
 		}
 
-		static void SwitchTabs(RE::MapMenu* a_this)
+		static bool ShouldOpenWorldMap()
 		{
-			a_this->SwitchTabsNotifyingAltar(1, nullptr);
-			iFrame = std::min<std::int32_t>(std::max<std::int32_t>(0, JSON::RefocusWorldMapDelay), 60);
-		}
-
-		static void DoIdle(RE::MapMenu* a_this)
-		{
-			_DoIdle(a_this);
-
-			if (!JSON::RefocusWorldMap)
-			{
-				return;
-			}
-
-			if (auto InterfaceManager = RE::InterfaceManager::GetInstance(false, true);
-				InterfaceManager && InterfaceManager->mapPageNumber != 2)
-			{
-				return;
-			}
-
-			if (iFrame > 0)
-			{
-				iFrame--;
-				if (iFrame == 0)
-				{
-					if (a_this->worldMapPlayerArrow)
-					{
-						auto x = a_this->worldMapPlayerArrow->GetFloat(4015);
-						auto y = a_this->worldMapPlayerArrow->GetFloat(4016);
-						a_this->CenterMapAt(x, y, true);
-					}
-				}
-			}
-		}
-
-		static void StartFadeOut(RE::MapMenu* a_this)
-		{
-			_StartFadeOut(a_this);
-
-			iFrame = 0;
-		}
-
-		static void StartFadeIn(RE::MapMenu* a_this)
-		{
-			_StartFadeIn(a_this);
-
-			if (auto InterfaceManager = RE::InterfaceManager::GetInstance(false, true);
-				InterfaceManager && InterfaceManager->mapPageNumber != 2)
-			{
-				return;
-			}
-
 			if (auto Player = RE::PlayerCharacter::GetSingleton())
 			{
 				if (Player->GetInterior())
 				{
 					if (JSON::AutoInteriors)
 					{
-						SwitchTabs(a_this);
-						return;
+						return false;
 					}
 				}
 				else if (auto WorldSpace = Player->GetWorldSpace())
 				{
 					auto editorID = WorldSpace->editorID.c_str();
-					if (JSON::AutoSmallWorld && WorldSpace->flags & 1)
+					if (ListHasWorldSpace(JSON::AutoWorldSpaces, editorID))
 					{
-						if (!ListHasWorldSpace(JSON::AutoSmallWorldBlockList.GetValue(), editorID))
-						{
-							SwitchTabs(a_this);
-							return;
-						}
+						return false;
 					}
 
-					if (ListHasWorldSpace(JSON::AutoWorldSpaces.GetValue(), editorID))
+					if (JSON::AutoSmallWorld && WorldSpace->flags & 1)
 					{
-						SwitchTabs(a_this);
-						return;
+						return ListHasWorldSpace(JSON::AutoSmallWorldBlockList, editorID);
+					}
+				}
+			}
+
+			return true;
+		}
+
+		static void GetCanFastTravelFromWorldSpace()
+		{
+			if (auto Tile = RE::Tile::GetMenuByClass(RE::MENU_CLASS::kMapMenu))
+			{
+				if (auto Menu = Tile->GetMenu())
+				{
+					if (auto VOblivionUEPairingGate = UE::VOblivionUEPairingGate::GetSingleton())
+					{
+						SendHandler(
+							VOblivionUEPairingGate,
+							Menu->pairingEntry,
+							*Main_iFrameCounter,
+							"CanFastTravelFromWorldSpace",
+							HandleGetCanFastTravelFromWorldSpace,
+							ShouldOpenWorldMap());
 					}
 				}
 			}
 		}
 
-		inline static REL::HookVFT _DoIdle{ RE::MapMenu::VTABLE[0], 0x12, DoIdle };
-		inline static REL::HookVFT _StartFadeOut{ RE::MapMenu::VTABLE[0], 0x16, StartFadeOut };
-		inline static REL::HookVFT _StartFadeIn{ RE::MapMenu::VTABLE[0], 0x18, StartFadeIn };
+		inline static REL::Hook _Hook{ REL::Offset(0x656B240), 0x46, GetCanFastTravelFromWorldSpace };
 
 	public:
-		inline static std::atomic<std::int32_t> iFrame{ 0 };
-		inline static REL::Relocation<bool*> FogOfWar{ REL::Offset(0x8FDCC80) };
-	};
-
-	class hkSwitchTabs :
-		public REX::Singleton<hkSwitchTabs>
-	{
-	private:
-		static void SwitchTabs(RE::MapMenu* a_this, std::int32_t a_id, RE::Tile* a_target)
-		{
-			if (a_id > 2)
-			{
-				hkMapMenu::iFrame = 0;
-			}
-			return _Hook0(a_this, a_id, a_target);
-		}
-
-		inline static REL::Hook _Hook0{ REL::Offset(0x6587B30), 0x2BC, SwitchTabs };
-		inline static REL::Hook _Hook1{ REL::Offset(0x6589190), 0xBF6, SwitchTabs };
-		inline static REL::Hook _Hook2{ REL::Offset(0x6597020), 0x055, SwitchTabs };
-	};
-
-	class hkSwitchTabsNotifyingAltar :
-		public REX::Singleton<hkSwitchTabsNotifyingAltar>
-	{
-	private:
-		static void SwitchTabsNotifyingAltar(RE::MapMenu* a_this, std::int32_t a_id, RE::Tile* a_target)
-		{
-			if (a_id > 2)
-			{
-				hkMapMenu::iFrame = 0;
-			}
-			return _SwitchTabsNotifyingAltar(a_this, a_id, a_target);
-		}
-
-		inline static REL::Hook _SwitchTabsNotifyingAltar{ REL::Offset(0x6600730), 0x2234, SwitchTabsNotifyingAltar };
+		inline static REL::Relocation<bool*> FogOfWar{ REL::Offset(0x8F9F2C0) };
 	};
 
 	static void Init()
