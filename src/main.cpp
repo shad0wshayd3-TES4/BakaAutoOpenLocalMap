@@ -136,7 +136,7 @@ namespace HOOK
 				}
 				else if (auto WorldSpace = Player->GetWorldSpace())
 				{
-					auto editorID = WorldSpace->editorID.c_str();
+					auto editorID = WorldSpace->GetFormEditorID();
 					if (ListHasWorldSpace(JSON::AutoWorldSpaces, editorID))
 					{
 						return false;
